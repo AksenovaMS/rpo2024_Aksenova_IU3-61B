@@ -35,3 +35,35 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
         android
         log)
+
+
+add_library(spdlog STATIC IMPORTED)
+set_target_properties(spdlog PROPERTIES IMPORTED_LOCATION
+        /home/mary/AndroidStudioProjects/libs/spdlog/build/${ANDROID_ABI}/libspdlog.a)
+target_include_directories(fclient PUBLIC
+        /home/mary/AndroidStudioProjects/libs/spdlog/spdlog/include)
+
+
+target_link_libraries( # Specifies the target library.
+        fclient
+        spdlog
+        # Links the target library to the log library
+        # included in the NDK.
+        ${log-lib} )
+
+
+add_library(mbedcrypto SHARED IMPORTED)
+set_target_properties(mbedcrypto PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nativeLibs/${ANDROID_ABI}/libmbedcrypto.so)
+
+target_include_directories(fclient PUBLIC
+        /home/mary/AndroidStudioProjects/libs/mbedtls/mbedtls/include
+        )
+
+
+target_link_libraries( # Specifies the target library.
+        fclient
+        mbedcrypto
+        ${log-lib}
+        )
+
