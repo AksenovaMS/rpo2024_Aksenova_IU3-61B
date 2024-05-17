@@ -5,6 +5,7 @@ import { faTrash, faEdit, faPlus } from '@fortawesome/free-solid-svg-icons'
 import Alert from './Alert'
 import BackendService from "../services/BackendService";
 import { useNavigate } from 'react-router-dom';
+import PaginationComponent from "./PaginationComponent";
 
 const CountryListComponent = props => {
 
@@ -15,6 +16,18 @@ const CountryListComponent = props => {
     const [checkedItems, setCheckedItems] = useState([]);
     const [hidden, setHidden] = useState(false);
     const navigate = useNavigate();
+
+
+    const [page, setPage] = useState(0);
+    const [totalCount, setTotalCount] = useState(0);
+    const limit = 5;
+
+
+    const onPageChanged =cp => {
+        refreshCountries(cp - 1)
+    }
+
+
 
     const setChecked = v =>  {
         setCheckedItems(Array(countries.length).fill(v));
@@ -56,19 +69,28 @@ const CountryListComponent = props => {
         }
     }
 
-    const refreshCountries = () => {
-        BackendService.retrieveAllCountries()
+
+    const refreshCountries = cp => {
+        BackendService.retrieveAllCountries(cp, limit)
             .then(
                 resp => {
-                    setCountries(resp.data);
+                    setCountries(resp.data.content);
                     setHidden(false);
-                })
-            .catch(()=> { setHidden(true )})
+                    setTotalCount(resp.data.totalElements);
+                    setPage(cp);
+                }
+            )
+            .catch(()=> {
+                setHidden(true );
+                setTotalCount(0);
+            })
             .finally(()=> setChecked(false))
     }
 
+
+
     useEffect(() => {
-        refreshCountries();
+        refreshCountries(page);
     }, [])
 
     const updateCountryClicked = id => {
@@ -77,7 +99,7 @@ const CountryListComponent = props => {
 
     const onDelete = () =>  {
         BackendService.deleteCountries(selectedCountries)
-            .then( () => refreshCountries())
+            .then( () => refreshCountries(page))
             .catch(()=>{})
     }
 
@@ -111,6 +133,11 @@ const CountryListComponent = props => {
                 </div>
             </div>
             <div className="row my-2 me-0">
+                <PaginationComponent
+                    totalRecords={totalCount}
+                    pageLimit={limit}
+                    pageNeighbours={1}
+                    onPageChanged={onPageChanged} />
                 <table className="table table-sm">
                     <thead className="thead-light">
                     <tr>

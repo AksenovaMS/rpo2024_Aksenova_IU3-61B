@@ -31,8 +31,8 @@ public class Museum {
     public String location;
 
     @JsonIgnore
-    @OneToMany
-    public List<Painting> paintings = new ArrayList<>();
+    @OneToMany(mappedBy = "museum")
+    public List<Painting> paintings = new ArrayList<Painting>();
 
     @JsonIgnore
     @ManyToMany

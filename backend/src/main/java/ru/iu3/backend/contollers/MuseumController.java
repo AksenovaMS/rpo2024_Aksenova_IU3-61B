@@ -1,15 +1,21 @@
 package ru.iu3.backend.contollers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.iu3.backend.models.Artists;
 import ru.iu3.backend.models.Country;
 import ru.iu3.backend.models.Museum;
+import ru.iu3.backend.models.Painting;
 import ru.iu3.backend.repositories.CountryRepository;
 import ru.iu3.backend.repositories.MuseumRepository;
+import ru.iu3.backend.tools.DataValidationException;
 
 import java.util.*;
 
@@ -22,12 +28,27 @@ public class MuseumController {
     MuseumRepository museumRepository;
 
     @GetMapping("/museums")
-    public List
-    getAllMuseums() {
-        return museumRepository.findAll();
+    public Page getAllMuseums(@RequestParam("page") int page, @RequestParam("limit") int limit) {
+        return museumRepository.findAll(PageRequest.of(page, limit, Sort.by(Sort.Direction.ASC, "name")));
     }
 
+    @GetMapping("/museums/{id}")
+    public ResponseEntity getMuseum(@PathVariable(value = "id") Long museumId)
+            throws DataValidationException
+    {
+        Museum museum = museumRepository.findById(museumId)
+                .orElseThrow(()-> new DataValidationException("Музей с таким индексом не найден"));
+        return ResponseEntity.ok(museum);
+    }
 
+    @GetMapping("/museums/{id}/paintings")
+    public ResponseEntity<List<Painting>> getArtistPaintings(@PathVariable(value="id") Long museumId) {
+        Optional<Museum> cc = museumRepository.findById(museumId);
+        if (cc.isPresent()) {
+            return ResponseEntity.ok(cc.get().paintings);
+        }
+        return ResponseEntity.ok(new ArrayList<Painting>());
+    }
 
     @PostMapping("/museums")
     public ResponseEntity<Object> createMuseum(@RequestBody Museum museum)
@@ -49,6 +70,11 @@ public class MuseumController {
         }
     }
 
+    @PostMapping("/deletemuseums")
+    public ResponseEntity deleteMuseums(@Validated @RequestBody List museums) {
+        museumRepository.deleteAll(museums);
+        return new ResponseEntity(HttpStatus.OK);
+    }
 
     @PutMapping("/museums/{id}")
     public ResponseEntity<Museum> updateMuseum(@PathVariable(value = "id") Long museumId,
@@ -59,6 +85,7 @@ public class MuseumController {
         if (cc.isPresent()) {
             museum = cc.get();
             museum.name = museumDetails.name;
+            museum.location = museumDetails.location;
             museumRepository.save(museum);
             return ResponseEntity.ok(museum);
         } else {

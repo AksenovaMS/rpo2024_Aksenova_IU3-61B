@@ -30,6 +30,9 @@ public class User {
     @Column(name = "password")
     public String password;
 
+    @Transient
+    public String np;
+
     @Column(name = "email", nullable = false, unique = true)
     public String email;
 
